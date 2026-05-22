@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LF3 Lernquiz</title>
+<style>
+:root{
+  --bg:#0b0f19;
+  --card:#131929;
+  --card2:#1a2236;
+  --card3:#22304a;
+  --border:#263048;
+  --gold:#f5c518;
+  --gold2:#e8a500;
+  --blue:#4ea8ff;
+  --green:#2ecc71;
+  --red:#e74c3c;
+  --purple:#a78bfa;
+  --text:#eaf0fb;
+  --muted:#7b8fb0;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  overflow-x:hidden;
+}
+
+/* ──────────── SCREENS ──────────── */
+.screen{width:100%;max-width:700px;display:none;animation:fadeIn .3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ──────────── START SCREEN ──────────── */
+.hero{
+  background:linear-gradient(160deg,#131929 0%,#0e1929 100%);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:52px 36px 44px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 700px 350px at 50% -20%,rgba(245,197,24,.1),transparent);
+  pointer-events:none;
+}
+.hero-emoji{font-size:4rem;display:block;margin-bottom:14px;
+  animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hero h1{font-size:2.4rem;font-weight:900;letter-spacing:-1px;line-height:1.1}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero p{color:var(--muted);margin-top:10px;font-size:1rem;line-height:1.5}
+
+.topic-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:8px;margin:28px 0;
+}
+.topic-tag{
+  background:rgba(78,168,255,.08);color:var(--blue);
+  border:1px solid rgba(78,168,255,.2);
+  border-radius:8px;padding:8px 10px;font-size:.78rem;font-weight:600;
+  transition:background .15s,transform .1s;cursor:default;
+}
+.topic-tag:hover{background:rgba(78,168,255,.15);transform:translateY(-1px)}
+
+.stat-row{display:flex;gap:12px;justify-content:center;margin-bottom:28px}
+.stat{
+  flex:1;max-width:120px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:16px 8px;text-align:center;
+}
+.stat .n{font-size:2rem;font-weight:900;color:var(--gold);line-height:1}
+.stat .l{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+.btn-start{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0b0f19;border:none;padding:18px 48px;border-radius:14px;
+  font-size:1.15rem;font-weight:900;cursor:pointer;
+  box-shadow:0 6px 30px rgba(245,197,24,.35);
+  transition:transform .1s,box-shadow .1s;
+  letter-spacing:.3px;
+}
+.btn-start:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(245,197,24,.45)}
+.btn-start:active{transform:translateY(0)}
+.sound-toggle{
+  position:absolute;top:16px;right:16px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;cursor:pointer;
+  font-size:.85rem;color:var(--muted);transition:color .15s,border-color .15s;
+}
+.sound-toggle:hover{color:var(--text);border-color:var(--gold)}
+
+/* ──────────── QUIZ SCREEN ──────────── */
+#quiz{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.qhead{
+  padding:20px 24px;
+  background:var(--card2);
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.qhead-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.q-num{font-size:.85rem;color:var(--muted);font-weight:600}
+.score-pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(245,197,24,.12);border:1px solid rgba(245,197,24,.25);
+  color:var(--gold);padding:6px 14px;border-radius:99px;
+  font-weight:800;font-size:.9rem;
+  transition:transform .2s;
+}
+.score-pill.bump{animation:bump .25s ease}
+@keyframes bump{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+.pbar-wrap{height:8px;background:var(--card3);border-radius:99px;overflow:hidden}
+.pbar{
+  height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold2),var(--gold),var(--purple));
+  background-size:200% 100%;
+  transition:width .45s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 12px rgba(245,197,24,.4);
+  animation:shimmer 2s linear infinite;
+}
+@keyframes shimmer{0%{background-position:100%}100%{background-position:-100%}}
+
+.streak-bar{
+  height:0;overflow:hidden;
+  transition:height .3s;display:flex;align-items:center;gap:8px;
+  padding:0 24px;background:rgba(245,197,24,.06);
+  font-size:.85rem;font-weight:700;color:var(--gold);
+}
+.streak-bar.show{height:36px}
+
+.qbody{padding:28px 28px 32px}
+.cat-badge{
+  display:inline-block;
+  background:rgba(78,168,255,.1);color:var(--blue);
+  border:1px solid rgba(78,168,255,.22);
+  padding:5px 14px;border-radius:99px;
+  font-size:.77rem;font-weight:700;letter-spacing:.4px;
+  margin-bottom:18px;text-transform:uppercase;
+}
+.q-text{
+  font-size:1.18rem;font-weight:600;line-height:1.55;
+  margin-bottom:26px;min-height:56px;
+}
+
+/* Options */
+.options{display:grid;gap:10px}
+.opt{
+  display:flex;align-items:center;gap:14px;
+  background:var(--card2);border:2px solid var(--border);
+  border-radius:var(--radius);padding:15px 18px;
+  cursor:pointer;color:var(--text);font-size:1rem;text-align:left;
+  transition:border-color .15s,background .15s,transform .08s;
+  position:relative;overflow:hidden;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.opt::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.18) 0%,transparent 70%);
+  opacity:0;transition:opacity .4s;border-radius:inherit;
+}
+.opt.ripple::after{opacity:1;transition:opacity 0s}
+.opt:hover:not(.locked){transform:translateY(-2px);border-color:var(--blue);background:rgba(78,168,255,.06)}
+.opt.locked{cursor:default}
+.key{
+  width:34px;height:34px;flex-shrink:0;
+  display:grid;place-items:center;
+  background:var(--card3);border-radius:8px;
+  font-weight:800;font-size:.9rem;color:var(--muted);
+  transition:all .2s;
+}
+.opt-label{flex:1;line-height:1.4}
+.opt-icon{font-size:1.3rem;opacity:0;transition:opacity .2s;flex-shrink:0;width:24px;text-align:center}
+
+/* States */
+.opt.correct{border-color:var(--green)!important;background:rgba(46,204,113,.12)!important}
+.opt.correct .key{background:var(--green);color:#0b0f19}
+.opt.correct .opt-icon{opacity:1}
+
+.opt.wrong{border-color:var(--red)!important;background:rgba(231,76,60,.12)!important}
+.opt.wrong .key{background:var(--red);color:#fff}
+.opt.wrong .opt-icon{opacity:1}
+
+.opt.reveal{border-color:rgba(46,204,113,.4)!important;background:rgba(46,204,113,.05)!important}
+.opt.reveal .key{background:rgba(46,204,113,.3);color:var(--green)}
+
+/* Feedback */
+.feedback{
+  margin-top:20px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.fb-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 18px;cursor:pointer;background:var(--card2);
+  border-bottom:1px solid transparent;
+  user-select:none;transition:background .15s;
+}
+.fb-head:hover{background:var(--card3)}
+.fb-head.open{border-bottom-color:var(--border)}
+.fb-title{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px}
+.fb-title.ok{color:var(--green)}
+.fb-title.err{color:var(--red)}
+.fb-arrow{color:var(--muted);font-size:.9rem;transition:transform .25s}
+.fb-arrow.open{transform:rotate(180deg)}
+.fb-body{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s ease;
+  background:var(--card);padding:0 18px;
+  font-size:.92rem;color:var(--muted);line-height:1.7;
+}
+.fb-body.open{max-height:500px;padding:14px 18px}
+.fb-body strong{color:var(--text)}
+.fb-body code{
+  background:var(--card2);color:var(--gold);
+  padding:2px 7px;border-radius:5px;font-size:.88em;
+}
+
+.btn-next{
+  margin-top:20px;width:100%;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0b0f19;border:none;padding:15px;border-radius:var(--radius);
+  font-size:1rem;font-weight:900;cursor:pointer;
+  box-shadow:0 4px 18px rgba(245,197,24,.25);
+  transition:transform .08s,box-shadow .1s;
+  display:none;
+}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(245,197,24,.35)}
+.btn-next:active{transform:translateY(0)}
+
+/* ──────────── END SCREEN ──────────── */
+.end-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:24px;padding:52px 36px;text-align:center;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  position:relative;overflow:hidden;
+}
+.end-card::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 600px 300px at 50% -20%,rgba(245,197,24,.08),transparent);
+  pointer-events:none;
+}
+.stars-row{font-size:2.8rem;letter-spacing:6px;display:block;margin-bottom:10px}
+.end-title{font-size:2rem;font-weight:900}
+.end-sub{color:var(--muted);margin-top:8px;font-size:1rem}
+.score-big{
+  font-size:5rem;font-weight:900;color:var(--gold);
+  line-height:1;margin:28px 0 4px;
+  animation:countUp .6s cubic-bezier(.2,.8,.4,1.2) both;
+}
+@keyframes countUp{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.score-big sup{font-size:2rem;color:var(--muted)}
+.score-sub{font-size:1rem;color:var(--muted)}
+
+.topic-breakdown{
+  margin-top:28px;background:var(--card2);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;text-align:left;
+}
+.topic-breakdown h3{
+  font-size:.78rem;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;
+}
+.t-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem;
+}
+.t-row:last-child{border-bottom:none}
+.t-name{flex:1;color:var(--text)}
+.t-bar{width:80px;height:6px;background:var(--card3);border-radius:99px;overflow:hidden;flex-shrink:0}
+.t-fill{height:100%;border-radius:99px;transition:width .7s ease}
+.t-fill.full{background:var(--green)}
+.t-fill.ok{background:var(--gold)}
+.t-fill.low{background:var(--red)}
+.t-score{font-weight:800;font-size:.82rem;flex-shrink:0;min-width:32px;text-align:right}
+.t-score.full{color:var(--green)}
+.t-score.ok{color:var(--gold)}
+.t-score.low{color:var(--red)}
+
+.end-btns{display:flex;gap:12px;margin-top:28px;justify-content:center}
+.btn-again{
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0b0f19;border:none;padding:15px 36px;border-radius:var(--radius);
+  font-size:1rem;font-weight:900;cursor:pointer;transition:transform .08s;
+}
+.btn-again:hover{transform:translateY(-2px)}
+.btn-home{
+  background:var(--card2);color:var(--text);
+  border:1px solid var(--border);padding:15px 36px;border-radius:var(--radius);
+  font-size:1rem;font-weight:700;cursor:pointer;transition:transform .08s,border-color .15s;
+}
+.btn-home:hover{transform:translateY(-2px);border-color:var(--blue)}
+
+/* ──────────── PARTICLES / FX ──────────── */
+.particle{
+  position:fixed;pointer-events:none;z-index:9999;
+  border-radius:50%;animation:pfade .7s ease-out forwards;
+}
+@keyframes pfade{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}
+}
+.float-pts{
+  position:fixed;pointer-events:none;z-index:9999;
+  font-weight:900;font-size:1.6rem;color:var(--gold);
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
+  animation:floatUp .85s ease-out forwards;
+}
+@keyframes floatUp{
+  0%{opacity:1;transform:translate(-50%,0) scale(1)}
+  60%{opacity:1;transform:translate(-50%,-45px) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-80px) scale(.8)}
+}
+.flash-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:8888;
+  animation:flashOut .4s ease-out forwards;
+}
+@keyframes flashOut{0%{opacity:.4}100%{opacity:0}}
+
+/* Shakes */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px)}
+  35%{transform:translateX(8px)}
+  55%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+.do-shake{animation:shake .4s ease}
+
+/* Mobile */
+@media(max-width:500px){
+  .hero{padding:40px 20px 36px}
+  .hero h1{font-size:1.9rem}
+  .qbody{padding:20px 18px 24px}
+  .score-big{font-size:3.8rem}
+  .end-card{padding:40px 20px}
+  .end-btns{flex-direction:column}
+  .stat-row{gap:8px}
+}
+
+/* ──────────── LEHRERMODUS MODAL ──────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10000;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  animation:fadeIn .2s ease;
+}
+.modal-overlay.hidden{display:none}
+.modal-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;width:100%;max-width:780px;
+  max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:0 32px 80px rgba(0,0,0,.85);
+}
+.modal-head{
+  padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;
+  flex-shrink:0;gap:12px;
+}
+.modal-head-text h2{font-size:1.15rem;font-weight:800;color:var(--gold)}
+.modal-head-text p{font-size:.8rem;color:var(--muted);margin-top:3px}
+.modal-close{background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--muted);
+  font-size:.85rem;transition:color .15s,border-color .15s;flex-shrink:0;}
+.modal-close:hover{color:var(--text);border-color:var(--gold)}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px}
+.modal-textarea{
+  width:100%;height:320px;
+  background:var(--card2);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:.78rem;
+  font-family:"Cascadia Code",Consolas,monospace;padding:14px;
+  resize:vertical;outline:none;transition:border-color .15s;line-height:1.55;
+}
+.modal-textarea:focus{border-color:var(--gold)}
+.modal-hint{
+  margin-top:12px;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  font-size:.78rem;color:var(--muted);line-height:1.7;
+}
+.modal-hint code{background:var(--card3);color:var(--gold);padding:2px 6px;border-radius:4px;font-size:.9em}
+.modal-hint strong{color:var(--text)}
+.modal-actions{
+  padding:16px 24px;border-top:1px solid var(--border);
+  display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0;
+}
+.btn-save{
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0b0f19;border:none;padding:12px 24px;border-radius:10px;
+  font-size:.92rem;font-weight:900;cursor:pointer;transition:transform .08s;
+}
+.btn-save:hover{transform:translateY(-1px)}
+.btn-export,.btn-import-lbl,.btn-reset{
+  background:var(--card2);color:var(--text);
+  border:1px solid var(--border);padding:12px 18px;border-radius:10px;
+  font-size:.88rem;font-weight:600;cursor:pointer;
+  transition:border-color .15s,color .15s;display:inline-block;
+}
+.btn-export:hover,.btn-import-lbl:hover{border-color:var(--blue)}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+.editor-badge{
+  display:none;margin:14px auto 0;
+  background:rgba(167,139,250,.1);color:var(--purple);
+  border:1px solid rgba(167,139,250,.25);
+  border-radius:8px;padding:8px 16px;font-size:.8rem;font-weight:600;
+  text-align:center;
+}
+.editor-badge.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- ═══ START ═══ -->
+<div id="start" class="screen active">
+  <div class="hero">
+    <button class="sound-toggle" id="snd-btn" onclick="toggleSound()">🔊 Sound an</button>
+    <span class="hero-emoji">🎓</span>
+    <h1>LF3 <em>Lernquiz</em></h1>
+    <p>40 Fragen zu allen Themen aus Lernfeld 3 — Beschaffung &amp; Warenwirtschaft</p>
+    <div class="topic-grid" id="tgrid"></div>
+    <div class="stat-row">
+      <div class="stat"><div class="n">40</div><div class="l">Fragen</div></div>
+      <div class="stat"><div class="n">10</div><div class="l">Themen</div></div>
+      <div class="stat"><div class="n" id="hs-show">–</div><div class="l">Highscore</div></div>
+    </div>
+    <button class="btn-start" onclick="startGame()">▶&nbsp; Jetzt starten</button>
+    <div class="editor-badge" id="editor-badge"></div>
+  </div>
+</div>
+
+<!-- ═══ QUIZ ═══ -->
+<div id="quiz" class="screen">
+  <div class="qhead">
+    <div class="qhead-row">
+      <span class="q-num" id="qnum">Frage 1 / 40</span>
+      <div class="score-pill" id="spill">⭐ <span id="sval">0</span> Punkte</div>
+    </div>
+    <div class="pbar-wrap"><div class="pbar" id="pbar"></div></div>
+    <div class="streak-bar" id="streak-bar">🔥 <span id="streak-n">0</span>× Streak — Bonus aktiv!</div>
+  </div>
+  <div class="qbody">
+    <div class="cat-badge" id="catbadge"></div>
+    <div class="q-text" id="qtext"></div>
+    <div class="options" id="opts"></div>
+    <div class="feedback" id="fb" style="display:none">
+      <div class="fb-head" id="fb-head" onclick="toggleFb()">
+        <span class="fb-title" id="fb-title"></span>
+        <span class="fb-arrow" id="fb-arrow">▼</span>
+      </div>
+      <div class="fb-body" id="fb-body"></div>
+    </div>
+    <button class="btn-next" id="btn-next" onclick="nextQ()">Weiter →</button>
+  </div>
+</div>
+
+<!-- ═══ END ═══ -->
+<div id="end" class="screen">
+  <div class="end-card">
+    <span class="stars-row" id="end-stars"></span>
+    <div class="end-title" id="end-title"></div>
+    <div class="end-sub" id="end-sub"></div>
+    <div class="score-big" id="end-score"></div>
+    <div class="score-sub" id="end-sub2"></div>
+    <div class="topic-breakdown">
+      <h3>Ergebnis nach Thema</h3>
+      <div id="t-rows"></div>
+    </div>
+    <div class="end-btns">
+      <button class="btn-again" onclick="startGame()">Nochmal spielen 🔁</button>
+      <button class="btn-home" onclick="goHome()">Startseite</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LEHRERMODUS MODAL ═══ -->
+<div class="modal-overlay hidden" id="editor-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-head-text">
+        <h2>🔧 Lehrermodus — Fragen bearbeiten</h2>
+        <p>Fragen direkt bearbeiten, als JSON-Datei exportieren oder importieren</p>
+      </div>
+      <button class="modal-close" onclick="hideEditor()">✕ Schließen</button>
+    </div>
+    <div class="modal-body">
+      <textarea class="modal-textarea" id="editor-ta" spellcheck="false"></textarea>
+      <div class="modal-hint">
+        <strong>Aufbau einer Frage:</strong><br>
+        <code>{ "t": "Thema", "q": "Fragetext", "opts": ["Antwort A","Antwort B","C","D"], "ok": 0, "i": "Erklärungstext" }</code><br>
+        <code>ok</code> = Index der richtigen Antwort (0 = A, 1 = B, 2 = C, 3 = D) &nbsp;·&nbsp;
+        2 Optionen möglich für Ja/Nein-Fragen &nbsp;·&nbsp; HTML-Tags in <code>q</code> und <code>i</code> erlaubt
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveEditor()">💾 Speichern &amp; anwenden</button>
+      <button class="btn-export" onclick="exportQuestions()">⬇ Exportieren</button>
+      <label class="btn-import-lbl">
+        ⬆ Importieren
+        <input type="file" accept=".json" style="display:none" onchange="importQuestions(event)">
+      </label>
+      <button class="btn-reset" onclick="resetQuestions()">🔄 Original wiederherstellen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════
+//  FRAGEN
+// ═══════════════════════════
+const QS_ORIG=[
+// ── 1a Währungsrechnen ──
+{t:"1a · Währungsrechnen",q:"Der Kurs beträgt 1 EUR = 1,20 USD. Du zahlst in USD, ein Artikel kostet <strong>840 USD</strong>. Wie viel kostet er in EUR?",
+opts:["700,00 €","1.008,00 €","840,00 €","630,00 €"],ok:0,
+i:"<strong>Formel:</strong> <code>EUR = Fremdbetrag ÷ Kurs</code><br>840 ÷ 1,20 = <strong>700 €</strong><br>Du teilst immer durch den Kurs, wenn du von Fremdwährung in EUR umrechnest."},
+
+{t:"1a · Währungsrechnen",q:"Was sind <strong>Devisen</strong>?",
+opts:["Ausländische Münzen und Geldscheine","Ausländisches Buchgeld (z.B. USD auf einem Bankkonto)","Der Wechselkurs der EZB","Staatliche Goldreserven"],ok:1,
+i:"<strong>Devisen</strong> = ausländisches Buchgeld (Bankguthaben in Fremdwährung).<br><strong>Sorten</strong> = ausländische Münzen &amp; Scheine.<br>Im Außenhandel werden meistens Devisen verwendet."},
+
+{t:"1a · Währungsrechnen",q:"Der <strong>Briefkurs</strong> ist der Kurs, zu dem die Bank Devisen vom Kunden <u>ankauft</u>. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:1,
+i:"<strong>Falsch!</strong><br>Beim <strong>Briefkurs (= Verkaufskurs)</strong> verkauft die Bank Devisen an den Kunden.<br>Der <strong>Geldkurs (= Ankaufskurs)</strong> ist, wenn die Bank von dir kauft.<br>Merke: Briefkurs &gt; Geldkurs — die Differenz ist der Bankgewinn."},
+
+{t:"1a · Währungsrechnen",q:"Ein Betrieb kauft <strong>5.000 USD</strong>. Der Briefkurs lautet: 1 USD = 0,88 EUR. Wie viel EUR werden fällig?",
+opts:["5.681,82 €","5.000,00 €","4.400,00 €","4.000,00 €"],ok:2,
+i:"<strong>Formel:</strong> <code>EUR = USD × Kurs in EUR</code><br>5.000 × 0,88 = <strong>4.400 €</strong><br>Du kaufst USD → du zahlst den Briefkurs (Verkaufskurs der Bank)."},
+
+// ── 1b Zinsrechnung ──
+{t:"1b · Zinsrechnung",q:"Wie lautet die kaufmännische <strong>Zinsformel</strong>?",
+opts:["Z = K × p × t / (100 × 360)","Z = K × p / (100 × t)","Z = (K + p) × t / 360","Z = K / (p × t × 100)"],ok:0,
+i:"<strong>Z = K × p × t / (100 × 360)</strong><br>Z = Zinsen (€) · K = Kapital (€) · p = Zinssatz (%) · t = Laufzeit (Tage)<br>Die 360 steht für das kaufmännische Jahr (12 × 30 Tage)."},
+
+{t:"1b · Zinsrechnung",q:"Die <strong>kaufmännische Zinsmethode</strong> rechnet mit …",
+opts:["tatsächlichen Tagen und 365 Tagen pro Jahr","30 Tagen pro Monat und 360 Tagen pro Jahr","30 Tagen pro Monat und 365 Tagen pro Jahr","tatsächlichen Tagen und 360 Tagen pro Jahr"],ok:1,
+i:"<strong>Kaufmännische Methode (30/360):</strong><br>Jeder Monat hat genau 30 Tage → ein Jahr = 360 Tage. Das vereinfacht die Berechnung erheblich."},
+
+{t:"1b · Zinsrechnung",q:"Du kennst Z, K und t. Welche Formel gibt dir den <strong>Zinssatz p</strong>?",
+opts:["p = K × Z × t / 360","p = Z × K / (t × 100)","p = Z × 100 × 360 / (K × t)","p = K × 100 / (Z × t)"],ok:2,
+i:"Grundformel umstellen: <code>Z = K×p×t / (100×360)</code><br>→ <strong>p = Z × 100 × 360 / (K × t)</strong><br>Alle anderen Variablen bleiben gleich, nur p ist jetzt oben links."},
+
+{t:"1b · Zinsrechnung",q:"Wie viel Zinsen entstehen bei <strong>10.000 €</strong> für <strong>90 Tage</strong> bei <strong>4 %</strong> p.a.?",
+opts:["400,00 €","40,00 €","360,00 €","100,00 €"],ok:3,
+i:"<code>Z = 10.000 × 4 × 90 / (100 × 360)</code> = 3.600.000 / 36.000 = <strong>100 €</strong><br>Kurzer Weg: 90 Tage = ¼ Jahr → 4 % × ¼ = 1 % von 10.000 = 100 €"},
+
+// ── 1c Verteilungsrechnen ──
+{t:"1c · Verteilungsrechnen",q:"Ein Gewinn von <strong>12.000 €</strong> wird im Verhältnis <strong>2 : 3 : 5</strong> verteilt. Wie viel bekommt der Partner mit Anteil <strong>3</strong>?",
+opts:["3.600 €","4.800 €","6.000 €","2.400 €"],ok:0,
+i:"Gesamtteile: 2+3+5 = <strong>10</strong><br>Ein Teil: 12.000 ÷ 10 = <strong>1.200 €</strong><br>Anteil 3: 3 × 1.200 = <strong>3.600 €</strong>"},
+
+{t:"1c · Verteilungsrechnen",q:"<strong>Gewichtsspesen</strong> (Frachtkosten) werden nach welchem Schlüssel auf Artikel aufgeteilt?",
+opts:["Gleichmäßig auf alle Artikel","Proportional zum Gewicht der Waren","Proportional zum Warenwert","Nach Anzahl der Einheiten"],ok:1,
+i:"Frachtkosten entstehen durch das Gewicht → <strong>Verteilung nach Gewicht</strong>.<br>Versicherungskosten oder Zoll werden oft nach dem <em>Warenwert</em> aufgeteilt."},
+
+{t:"1c · Verteilungsrechnen",q:"Bei der Verteilung nach <strong>Wertanteilen</strong> dient der Warenwert als Schlüssel. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:0,
+i:"<strong>Richtig!</strong> Wenn Kosten vom Wert abhängen (z.B. Versicherung, Zoll), wird anteilig nach dem Warenwert verteilt. Wer teuerere Ware hat, zahlt mehr von diesen Kosten."},
+
+// ── 2 Sortimentsaufbau ──
+{t:"2 · Sortimentsaufbau",q:"Was beschreibt die <strong>Sortimentsbreite</strong>?",
+opts:["Die Anzahl der Artikel je Warengruppe","Die Qualität der Waren","Die Anzahl der verschiedenen Warengruppen","Der Gesamtumsatz des Sortiments"],ok:2,
+i:"<strong>Breite</strong> = wie viele Warengruppen es gibt (z.B. Hosen, Hemden, Jacken = Breite 3).<br><strong>Tiefe</strong> = wie viele Artikel es je Gruppe gibt (z.B. 15 verschiedene Hosen)."},
+
+{t:"2 · Sortimentsaufbau",q:"Ein Händler <strong>streicht schlecht laufende Produkte</strong> aus seinem Angebot. Das nennt man …",
+opts:["Sortimentserweiterung","Sortimentsvertiefung","Sortimentserschließung","Sortimentsbereinigung"],ok:3,
+i:"<strong>Sortimentsbereinigung</strong> = unrentable Artikel werden entfernt.<br>Ziel: weniger Lagerkosten, Fokus auf profitable Produkte.<br>Gegenteil: Erweiterung (neue Warengruppen hinzufügen)."},
+
+{t:"2 · Sortimentsaufbau",q:"Ein Elektrohändler hat bisher 5 Fernseher-Modelle und nimmt 10 weitere auf. Das ist eine …",
+opts:["Sortimentsbereinigung","Sortimentserweiterung (neue Gruppe)","Sortimentsumschichtung","Sortimentsvertiefung"],ok:3,
+i:"<strong>Vertiefung</strong> = mehr Artikel <em>innerhalb</em> einer bestehenden Gruppe (hier: Fernseher).<br><strong>Erweiterung</strong> = eine komplett neue Warengruppe kommt dazu."},
+
+{t:"2 · Sortimentsaufbau",q:"Ein Unternehmen mit <strong>breitem</strong> Sortiment hat viele Warengruppen, aber wenige Artikel je Gruppe. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:0,
+i:"<strong>Richtig!</strong><br>Breit + flach = viele Warengruppen, wenige Artikel je Gruppe (z.B. Kaufhaus).<br>Schmal + tief = wenige Gruppen, viele Artikel (z.B. Spezialladen für Kameras)."},
+
+// ── 3 Markt und Preis ──
+{t:"3 · Markt und Preis",q:"Was ist der <strong>Gleichgewichtspreis</strong>?",
+opts:["Der Preis, bei dem Angebotsmenge = Nachfragemenge","Der Durchschnittspreis aller Anbieter","Der gesetzlich festgelegte Mindestpreis","Der höchste Preis, den Käufer zahlen würden"],ok:0,
+i:"<strong>Gleichgewichtspreis</strong> = der Preis, bei dem genau so viel angeboten wie nachgefragt wird. Kein Überangebot, kein Nachfrageüberhang — der Markt ist im Gleichgewicht."},
+
+{t:"3 · Markt und Preis",q:"<strong>Viele Anbieter</strong> und <strong>viele Nachfrager</strong> — welche Marktform ist das?",
+opts:["Oligopol","Polypol","Monopol","Duopol"],ok:1,
+i:"<strong>Polypol</strong> = viele Anbieter + viele Nachfrager (z.B. Gemüsemarkt).<br><strong>Oligopol</strong> = wenige Anbieter (z.B. Mobilfunk).<br><strong>Monopol</strong> = ein Anbieter."},
+
+{t:"3 · Markt und Preis",q:"Die Nachfrage nach einem Gut <strong>steigt</strong>, das Angebot bleibt gleich. Was passiert mit dem Preis?",
+opts:["Er sinkt","Er bleibt gleich","Er steigt","Er schwankt zufällig"],ok:2,
+i:"Mehr Nachfrager konkurrieren um die gleiche Menge → <strong>Preis steigt</strong>.<br>Grundregel: Nachfrage ↑ bei gleichem Angebot → Preis ↑"},
+
+{t:"3 · Markt und Preis",q:"Beim <strong>Angebotsmonopol</strong> gibt es einen Anbieter und viele Nachfrager. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:0,
+i:"<strong>Richtig!</strong><br>Angebotsmonopol: 1 Anbieter, viele Nachfrager (z.B. früher Deutsche Post).<br>Nachfragemonopol: viele Anbieter, 1 Nachfrager.<br>Im Monopol hat der Anbieter die volle Preismacht."},
+
+// ── 4 ABC-Analyse ──
+{t:"4 · ABC-Analyse",q:"<strong>A-Güter</strong> machen wie viel Prozent des Gesamtumsatzes aus?",
+opts:["15–25 %","5–10 %","50–60 %","70–80 %"],ok:3,
+i:"<strong>A-Güter:</strong> ~70–80 % Umsatz, aber nur ~10–20 % aller Artikel.<br><strong>B-Güter:</strong> ~15–25 % Umsatz, ~30 % der Artikel.<br><strong>C-Güter:</strong> ~5–10 % Umsatz, aber ~50–60 % der Artikel."},
+
+{t:"4 · ABC-Analyse",q:"Was ist das Hauptziel der ABC-Analyse?",
+opts:["Alle Artikel gleichmäßig betreuen","Günstige Artikel finden","Lagerkosten erhöhen","Konzentration auf die umsatzstarken Artikel"],ok:3,
+i:"Die ABC-Analyse zeigt, welche Artikel am wichtigsten sind. <strong>A-Güter</strong> brauchen intensive Kontrolle (kleine, häufige Bestellungen). <strong>C-Güter</strong> erfordern weniger Aufwand."},
+
+{t:"4 · ABC-Analyse",q:"Welches Prinzip steckt hinter der ABC-Analyse?",
+opts:["Pareto-Prinzip: wenige Artikel erzielen den Großteil des Umsatzes","Gleichverteilung: alle Artikel haben gleichen Umsatzanteil","FIFO: zuerst eingelagert = zuerst verkauft","Minimalprinzip: immer günstig einkaufen"],ok:0,
+i:"<strong>Pareto-Prinzip (80/20-Regel):</strong> ca. 20 % der Artikel erzeugen ~80 % des Umsatzes. Dieses Ungleichgewicht macht die ABC-Analyse sichtbar."},
+
+{t:"4 · ABC-Analyse",q:"A-Güter sollten wegen ihres hohen Umsatzanteils immer in sehr großen Mengen gelagert werden. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:1,
+i:"<strong>Falsch!</strong> Bei A-Gütern empfiehlt sich <em>häufiges Bestellen in kleinen Mengen</em>. Das senkt die Kapitalbindung und Lagerkosten. C-Güter hingegen werden seltener in größeren Mengen bestellt."},
+
+// ── 5 Beschaffungsplanung ──
+{t:"5 · Beschaffungsplanung",q:"Was ist der <strong>Meldebestand</strong>?",
+opts:["Der kleinste Sicherheitsbestand","Der Lagerbestand, bei dem eine neue Bestellung ausgelöst wird","Die optimale Bestellmenge","Der maximale Lagerbestand"],ok:1,
+i:"<strong>Meldebestand</strong> (Bestellpunkt) = der Bestand, bei dem bestellt werden muss, damit der Mindestbestand während der Lieferzeit nicht unterschritten wird.<br>Formel: <code>Meldebestand = Mindestbestand + Verbrauch × Lieferzeit</code>"},
+
+{t:"5 · Beschaffungsplanung",q:"Was ist der <strong>Mindestbestand</strong> (eiserner Bestand)?",
+opts:["Der Bestand, bei dem bestellt wird","Die größte gelagerte Menge","Ein Sicherheitspuffer, der nie unterschritten werden soll","Der Durchschnittslagerbestand"],ok:2,
+i:"<strong>Mindestbestand</strong> = unterste Grenze im Lager. Er sichert die Lieferfähigkeit bei Lieferverzögerungen oder Nachfragespitzen. Er soll <em>nie</em> unterschritten werden."},
+
+{t:"5 · Beschaffungsplanung",q:"Was minimiert die <strong>optimale Bestellmenge</strong> (x&#8342;&#7510;&#7511;)?",
+opts:["Nur die Bestellkosten","Nur die Lagerkosten","Den Einstandspreis","Die Gesamtkosten aus Bestell- und Lagerhaltungskosten"],ok:3,
+i:"<strong>Andler-Formel:</strong> <code>x&#8342;&#7510;&#7511; = √(200 × J × Kf / (p × Kl))</code><br>Ziel: Minimum aus steigenden Lagerkosten und sinkenden Bestellkosten bei häufigerem Bestellen."},
+
+{t:"5 · Beschaffungsplanung",q:"Die fixen <strong>Bestellkosten steigen</strong>. Was passiert mit der optimalen Bestellmenge?",
+opts:["Sie sinkt","Sie bleibt gleich","Keine Auswirkung","Sie steigt"],ok:3,
+i:"Höhere Bestellkosten → häufiges Bestellen lohnt sich weniger → <strong>seltener, dafür mehr bestellen</strong> → optimale Bestellmenge steigt.<br>Merke: Kf ↑ → x&#8342;&#7510;&#7511; ↑"},
+
+{t:"5 · Beschaffungsplanung",q:"Beim <strong>Bestellpunktverfahren</strong> wird eine Bestellung ausgelöst, wenn …",
+opts:["der Lagerbestand den Meldebestand erreicht","ein fester Zeitraum abgelaufen ist","das Lager komplett leer ist","die Lieferzeit endet"],ok:0,
+i:"<strong>Bestellpunktverfahren</strong> = bestandsgesteuert (Bestellung bei Erreichen des Meldebestands).<br>Gegenteil: <strong>Bestellrhythmusverfahren</strong> = zeitgesteuert (Bestellung nach festem Intervall)."},
+
+// ── 6 Angebotsvergleich ──
+{t:"6 · Angebotsvergleich",q:"Wie berechnet sich der <strong>Einstandspreis</strong>?",
+opts:["Listeneinkaufspreis + Rabatt + Skonto − Bezugskosten","Listeneinkaufspreis − Rabatt − Skonto + Bezugskosten","Listeneinkaufspreis × Skonto ÷ Rabatt","Verkaufspreis − Gewinnaufschlag"],ok:1,
+i:"<strong>Bezugskalkulation Schritt für Schritt:</strong><br>Listenpreis − Rabatt = Zieleinkaufspreis<br>− Skonto = Bareinkaufspreis<br>+ Bezugskosten = <strong>Einstandspreis</strong>"},
+
+{t:"6 · Angebotsvergleich",q:"Was ist <strong>Skonto</strong>?",
+opts:["Mengenrabatt für Großbestellungen","Sonderrabatt für Stammkunden","Preisnachlass bei Zahlung innerhalb einer Zahlungsfrist","Nachlass für beschädigte Ware"],ok:2,
+i:"<strong>Skonto</strong> = Preisnachlass (z.B. 2 %), wenn du innerhalb einer kurzen Frist zahlst (z.B. 10 Tage). Es lohnt sich fast immer, Skonto zu nutzen — der effektive Jahreszins ist sehr hoch."},
+
+{t:"6 · Angebotsvergleich",q:"Was ist die <strong>Nutzwertanalyse</strong>?",
+opts:["Vergleich der Einstandspreise mehrerer Lieferanten","Analyse des Produktnutzens für Endkunden","Berechnung von Gesamtprojektkosten","Qualitativer Angebotsvergleich: Angebote werden nach gewichteten Kriterien bewertet"],ok:3,
+i:"<strong>Nutzwertanalyse</strong> = qualitativer Vergleich. Kriterien (z.B. Qualität, Lieferzeit, Service) werden gewichtet und bewertet. Die höchste Punktzahl gewinnt. Ergänzt den Preisvergleich um nicht-monetäre Faktoren."},
+
+{t:"6 · Angebotsvergleich",q:"Beim <strong>quantitativen Angebotsvergleich</strong> gewinnt der Anbieter mit dem niedrigsten Einstandspreis. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:0,
+i:"<strong>Richtig!</strong> Der quantitative Vergleich ist ein reiner Preisvergleich auf Basis des Einstandspreises. Wichtig: Bei unterschiedlichen Mengen musst du auf eine einheitliche Basis umrechnen."},
+
+{t:"6 · Angebotsvergleich",q:"Listenpreis <strong>500 €</strong>, Rabatt <strong>10 %</strong>, Skonto <strong>2 %</strong>, Frachtkosten <strong>15 €</strong>. Wie hoch ist der Einstandspreis?",
+opts:["441,00 €","465,00 €","450,00 €","456,00 €"],ok:3,
+i:"1. 500 − 10 % = <strong>450 €</strong> (Zieleinkaufspreis)<br>2. 450 − 2 % = <strong>441 €</strong> (Bareinkaufspreis)<br>3. 441 + 15 = <strong>456 €</strong> (Einstandspreis)<br>Achtung: Skonto auf den Zieleinkaufspreis rechnen!"},
+
+// ── 7 Bezugsquellen ──
+{t:"7 · Bezugsquellen",q:"Was ist ein Vorteil beim <strong>Direktbezug vom Hersteller</strong>?",
+opts:["Günstigere Preise durch Ausschalten des Zwischenhandels","Kleinere Mindestbestellmengen","Kürzere Lieferzeiten","Weniger Verwaltungsaufwand"],ok:0,
+i:"<strong>Direktbezug vom Hersteller:</strong><br>✅ Günstigere Preise (kein Zwischenhändler)<br>✅ Direkter Kontakt<br>❌ Meist große Mindestbestellmengen<br>❌ Evtl. längere Lieferzeiten"},
+
+{t:"7 · Bezugsquellen",q:"Was ist ein Vorteil beim Einkauf über den <strong>Großhandel</strong> gegenüber dem Hersteller?",
+opts:["Niedrigere Preise als beim Hersteller","Kleinere Mindestbestellmengen und kürzere Lieferzeiten","Einfluss auf Produktentwicklung","Direkter Kontakt zum Produzenten"],ok:1,
+i:"<strong>Großhandel:</strong><br>✅ Kleine Mindestmengen<br>✅ Kurze Lieferzeiten (eigenes Lager)<br>✅ Breites Sortiment<br>❌ Höhere Preise (Handelsspanne eingebaut)"},
+
+{t:"7 · Bezugsquellen",q:"Was sind <strong>externe Informationsquellen</strong> bei der Bezugsquellenermittlung?",
+opts:["Eigene Lagerbestände, interne Datenbanken","Buchhaltungsdaten, Produktionspläne","Messen, Kataloge, Internet, Handelsvertreter","Mitarbeiterwissen aus früheren Bestellungen"],ok:2,
+i:"<strong>Externe Quellen:</strong> Messen, Kataloge, Internet (B2B-Portale), Handelsvertreter, Branchenverbände, Fachzeitschriften.<br><strong>Interne Quellen:</strong> eigene Stammdaten, frühere Lieferantenlisten."},
+
+// ── 8 Nachhaltigkeit ──
+{t:"8 · Nachhaltigkeit",q:"Welche drei Dimensionen hat <strong>Nachhaltigkeit</strong>?",
+opts:["Ökologisch, Technologisch, Kulturell","Ökologisch, Ökonomisch, Sozial","Wirtschaftlich, Politisch, Umweltlich","Global, Regional, Lokal"],ok:1,
+i:"<strong>Drei-Säulen-Modell:</strong><br>🌿 <strong>Ökologisch</strong> = Umwelt schonen<br>💰 <strong>Ökonomisch</strong> = wirtschaftlicher Erfolg<br>👥 <strong>Sozial</strong> = faire Bedingungen für Menschen"},
+
+{t:"8 · Nachhaltigkeit",q:"Nachhaltige Beschaffung bedeutet, ausschließlich auf den <strong>günstigsten Preis</strong> zu achten. Stimmt das?",
+opts:["Ja, das stimmt","Nein, das stimmt nicht"],ok:1,
+i:"<strong>Falsch!</strong> Nachhaltige Beschaffung berücksichtigt:<br>🌱 Umwelt (CO₂, Ressourcen)<br>👷 Soziales (faire Löhne, keine Kinderarbeit)<br>📅 Wirtschaftliche Langfristigkeit<br>Der günstigste Preis allein reicht nicht."},
+
+{t:"8 · Nachhaltigkeit",q:"Was gehört zum <strong>sozialen</strong> Aspekt der Nachhaltigkeit in der Beschaffung?",
+opts:["CO₂-Reduktion in der Lieferkette","Günstige Preise für einkommensschwache Haushalte","Faire Arbeitsbedingungen und keine Kinderarbeit bei Lieferanten","Sponsoring von Sportvereinen"],ok:2,
+i:"<strong>Soziale Nachhaltigkeit:</strong> Menschenrechte einhalten, fair entlohnen, sichere Arbeitsbedingungen sicherstellen, Kinderarbeit verbieten — auch bei allen Zulieferern. Zertifikate: Fair Trade, SA8000."},
+
+{t:"8 · Nachhaltigkeit",q:"Welche Maßnahme fördert die <strong>ökologische</strong> Nachhaltigkeit in der Beschaffung?",
+opts:["Regionale Lieferanten bevorzugen (kürzere Transportwege)","Lagerbestände erhöhen","Nur nach dem günstigsten Preis einkaufen","Bestellfrequenz erhöhen"],ok:0,
+i:"<strong>Ökologische Beschaffung:</strong> kurze Transportwege (regional), umweltfreundliche Verpackungen, energieeffiziente Produktion, recycelbare Materialien. Regionale Lieferanten reduzieren CO₂-Emissionen und stärken lokale Wirtschaft."}
+];
+
+// Active question set — replaceable via teacher mode
+let QS=[...QS_ORIG];
+(function(){
+  try{
+    const saved=localStorage.getItem("lf3qs");
+    if(saved){const p=JSON.parse(saved);if(Array.isArray(p)&&p.length>0){QS=p;}}
+  }catch(e){}
+})();
+
+// ═══════════════════════════
+//  STATE
+// ═══════════════════════════
+let qs=[], cur=0, pts=0, streak=0, maxStreak=0, answered=false;
+let topicMap={};
+let soundOn = false;
+let audioCtx = null;
+
+const TOPICS=["1a · Währungsrechnen","1b · Zinsrechnung","1c · Verteilungsrechnen",
+ "2 · Sortimentsaufbau","3 · Markt und Preis","4 · ABC-Analyse",
+ "5 · Beschaffungsplanung","6 · Angebotsvergleich","7 · Bezugsquellen","8 · Nachhaltigkeit"];
+
+// Fill topic tags
+document.getElementById("tgrid").innerHTML=TOPICS.map(t=>`<div class="topic-tag">${t}</div>`).join("");
+
+// Highscore
+function loadHS(){
+  const h=localStorage.getItem("lf3hs")||"";
+  document.getElementById("hs-show").textContent=h?h+"/40":"–";
+}
+loadHS();
+
+// ═══════════════════════════
+//  SOUND
+// ═══════════════════════════
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById("snd-btn").textContent=soundOn?"🔊 Sound an":"🔇 Sound aus";
+}
+
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type){
+  if(!soundOn) return;
+  try{
+    const ctx=getCtx();
+    if(type==="ok"){
+      [[523,.0],[659,.1],[784,.22],[1047,.38]].forEach(([f,d])=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sine"; o.frequency.value=f;
+        g.gain.setValueAtTime(0,ctx.currentTime+d);
+        g.gain.linearRampToValueAtTime(.25,ctx.currentTime+d+.02);
+        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.22);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ctx.currentTime+d); o.stop(ctx.currentTime+d+.25);
+      });
+    } else if(type==="err"){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type="sawtooth"; o.frequency.setValueAtTime(220,ctx.currentTime);
+      o.frequency.linearRampToValueAtTime(130,ctx.currentTime+.3);
+      g.gain.setValueAtTime(.25,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime+.4);
+    } else if(type==="next"){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type="sine"; o.frequency.value=880;
+      g.gain.setValueAtTime(.12,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime+.14);
+    } else if(type==="end"){
+      [523,659,784,1047,1319].forEach((f,i)=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="sine"; o.frequency.value=f;
+        const t=ctx.currentTime+i*.12;
+        g.gain.setValueAtTime(.2,t);
+        g.gain.exponentialRampToValueAtTime(.001,t+.3);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t+.35);
+      });
+    }
+  }catch(e){}
+}
+
+// ═══════════════════════════
+//  FX
+// ═══════════════════════════
+function ripple(el, e){
+  const r=el.getBoundingClientRect();
+  el.style.setProperty("--rx",((e.clientX-r.left)/r.width*100)+"%");
+  el.style.setProperty("--ry",((e.clientY-r.top)/r.height*100)+"%");
+  el.classList.add("ripple");
+  setTimeout(()=>el.classList.remove("ripple"),450);
+}
+
+function particles(el, color){
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const cols=color?[color]:["#f5c518","#2ecc71","#4ea8ff","#a78bfa","#ff6b6b","#fff"];
+  for(let i=0;i<22;i++){
+    const p=document.createElement("div");
+    p.className="particle";
+    const angle=Math.random()*Math.PI*2;
+    const dist=60+Math.random()*90;
+    p.style.cssText=`
+      left:${cx}px;top:${cy}px;
+      width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;
+      background:${cols[Math.floor(Math.random()*cols.length)]};
+      --tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;
+      animation-duration:${.5+Math.random()*.4}s;
+      animation-delay:${Math.random()*.06}s;
+    `;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+}
+
+function floatPts(el, n, bonus){
+  const r=el.getBoundingClientRect();
+  const p=document.createElement("div");
+  p.className="float-pts";
+  p.textContent=`+${n}${bonus?" 🔥":""}`;
+  p.style.cssText=`left:${r.left+r.width/2}px;top:${r.top-10}px`;
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(),900);
+}
+
+function flash(color){
+  const d=document.createElement("div");
+  d.className="flash-overlay";
+  d.style.background=color;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),500);
+}
+
+function bumpScore(){
+  const p=document.getElementById("spill");
+  p.classList.add("bump");
+  setTimeout(()=>p.classList.remove("bump"),300);
+}
+
+// ═══════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════
+function shuffle(a){
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+
+function startGame(){
+  qs=shuffle(QS);
+  cur=0; pts=0; streak=0; maxStreak=0; answered=false;
+  topicMap={};
+  qs.forEach(q=>{ if(!topicMap[q.t]) topicMap[q.t]={c:0,n:0}; });
+  show("quiz"); renderQ();
+}
+
+function goHome(){ loadHS(); show("start"); }
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function renderQ(){
+  answered=false;
+  const q=qs[cur];
+  document.getElementById("qnum").textContent=`Frage ${cur+1} / ${qs.length}`;
+  document.getElementById("sval").textContent=pts;
+  document.getElementById("pbar").style.width=`${(cur/qs.length)*100}%`;
+  document.getElementById("catbadge").textContent=q.t;
+  document.getElementById("qtext").innerHTML=q.q;
+
+  const sb=document.getElementById("streak-bar");
+  if(streak>=2){
+    sb.classList.add("show");
+    document.getElementById("streak-n").textContent=streak;
+  } else sb.classList.remove("show");
+
+  const optEl=document.getElementById("opts");
+  optEl.innerHTML="";
+  const keys=["A","B","C","D"];
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement("button");
+    btn.className="opt";
+    btn.innerHTML=`<span class="key">${keys[i]}</span><span class="opt-label">${o}</span><span class="opt-icon"></span>`;
+    btn.addEventListener("click", e=>{ripple(btn,e); pick(i, btn);});
+    optEl.appendChild(btn);
+  });
+
+  document.getElementById("fb").style.display="none";
+  document.getElementById("btn-next").style.display="none";
+}
+
+function pick(idx, btn){
+  if(answered) return;
+  answered=true;
+  const q=qs[cur];
+  const isOk=idx===q.ok;
+  const allOpts=document.querySelectorAll(".opt");
+
+  allOpts.forEach(o=>o.classList.add("locked"));
+  allOpts[q.ok].classList.add("correct");
+  allOpts[q.ok].querySelector(".opt-icon").textContent="✓";
+
+  if(isOk){
+    const bonus=streak>=2;
+    const earned=10+(bonus?5:0);
+    pts+=earned;
+    streak++;
+    maxStreak=Math.max(maxStreak,streak);
+
+    particles(btn,"#2ecc71");
+    floatPts(btn,earned,bonus);
+    flash("rgba(46,204,113,.15)");
+    playSound("ok");
+    bumpScore();
+    document.getElementById("sval").textContent=pts;
+
+    if(streak>=2){
+      document.getElementById("streak-n").textContent=streak;
+      document.getElementById("streak-bar").classList.add("show");
+    }
+  } else {
+    streak=0;
+    document.getElementById("streak-bar").classList.remove("show");
+    allOpts[idx].classList.add("wrong");
+    allOpts[idx].querySelector(".opt-icon").textContent="✗";
+    allOpts[idx].classList.add("do-shake");
+    particles(btn,"#e74c3c");
+    flash("rgba(231,76,60,.12)");
+    playSound("err");
+    setTimeout(()=>allOpts[idx].classList.remove("do-shake"),450);
+  }
+
+  topicMap[q.t].n++;
+  if(isOk) topicMap[q.t].c++;
+
+  // Feedback
+  const fb=document.getElementById("fb");
+  fb.style.display="block";
+  const title=document.getElementById("fb-title");
+  const body=document.getElementById("fb-body");
+  const arrow=document.getElementById("fb-arrow");
+
+  if(isOk){
+    title.className="fb-title ok";
+    title.innerHTML="✅ "+getCheer();
+    body.classList.remove("open"); arrow.classList.remove("open");
+    document.getElementById("fb-head").classList.remove("open");
+  } else {
+    title.className="fb-title err";
+    title.innerHTML="❌ Leider falsch — Erklärung:";
+    body.classList.add("open"); arrow.classList.add("open");
+    document.getElementById("fb-head").classList.add("open");
+  }
+  body.innerHTML=q.i;
+  document.getElementById("btn-next").style.display="block";
+}
+
+function toggleFb(){
+  const body=document.getElementById("fb-body");
+  const arrow=document.getElementById("fb-arrow");
+  const head=document.getElementById("fb-head");
+  body.classList.toggle("open");
+  arrow.classList.toggle("open");
+  head.classList.toggle("open");
+}
+
+function getCheer(){
+  return ["Perfekt! 🎉","Super gemacht! 💪","Richtig! 🚀","Klasse! ⚡","Genau! ✨","Sehr gut! 🌟"][Math.floor(Math.random()*6)];
+}
+
+function nextQ(){
+  playSound("next");
+  cur++;
+  if(cur>=qs.length) endGame();
+  else { renderQ(); window.scrollTo(0,0); }
+}
+
+// ═══════════════════════════
+//  END
+// ═══════════════════════════
+function endGame(){
+  let totalC=Object.values(topicMap).reduce((s,v)=>s+v.c,0);
+  const total=qs.length;
+  const pct=total>0?totalC/total:0;
+
+  let stars,title,sub;
+  if(pct>=.95){stars="⭐⭐⭐";title="Unschlagbar! 🎓";sub="Fast alles richtig — du bist bereit für die Prüfung!"; confetti(); playSound("end");}
+  else if(pct>=.8){stars="⭐⭐⭐";title="Sehr gut! 🏆";sub="Tolle Leistung! Noch ein bisschen und du bist perfekt."; playSound("end");}
+  else if(pct>=.6){stars="⭐⭐";title="Gut gemacht! 👍";sub="Solide Basis! Schau dir die falschen Antworten nochmal an.";}
+  else if(pct>=.4){stars="⭐";title="Weiter üben! 💡";sub="Noch etwas Wiederholung und du hast es bald im Griff.";}
+  else {stars="⭐";title="Nicht aufgeben! 📖";sub="Lies die Erklärungen nochmal durch und versuche es erneut.";}
+
+  document.getElementById("end-stars").textContent=stars;
+  document.getElementById("end-title").textContent=title;
+  document.getElementById("end-sub").textContent=sub;
+  document.getElementById("end-score").innerHTML=`${totalC}<sup> / ${total}</sup>`;
+  document.getElementById("end-sub2").textContent=`${Math.round(pct*100)} % richtig · ${pts} Punkte · Längster Streak: ${maxStreak}`;
+
+  const rows=document.getElementById("t-rows");
+  rows.innerHTML="";
+  Object.keys(topicMap).forEach(t=>{
+    const s=topicMap[t];
+    if(!s||s.n===0) return;
+    const p=s.c/s.n;
+    const cls=p>=.8?"full":p>=.5?"ok":"low";
+    rows.innerHTML+=`
+      <div class="t-row">
+        <span class="t-name">${t}</span>
+        <div class="t-bar"><div class="t-fill ${cls}" style="width:${p*100}%"></div></div>
+        <span class="t-score ${cls}">${s.c}/${s.n}</span>
+      </div>`;
+  });
+
+  const hs=parseInt(localStorage.getItem("lf3hs")||"0");
+  if(totalC>hs) localStorage.setItem("lf3hs",totalC);
+
+  show("end");
+}
+
+// ═══════════════════════════
+//  CONFETTI
+// ═══════════════════════════
+function confetti(){
+  const cols=["#f5c518","#2ecc71","#4ea8ff","#a78bfa","#e74c3c","#ff9f43","#ffffff"];
+  for(let i=0;i<100;i++){
+    setTimeout(()=>{
+      const d=document.createElement("div");
+      const sz=6+Math.random()*8;
+      d.style.cssText=`
+        position:fixed;pointer-events:none;z-index:9999;
+        left:${Math.random()*100}vw;top:-20px;
+        width:${sz}px;height:${sz}px;
+        border-radius:${Math.random()>.5?"50%":"2px"};
+        background:${cols[Math.floor(Math.random()*cols.length)]};
+        transform:rotate(${Math.random()*360}deg);
+        animation:confettiFall ${1.5+Math.random()*2}s ease-in ${Math.random()*.8}s forwards;
+      `;
+      document.body.appendChild(d);
+      setTimeout(()=>d.remove(),4000);
+    },i*25);
+  }
+}
+
+// Confetti keyframe via style tag
+const ks=document.createElement("style");
+ks.textContent="@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}";
+document.head.appendChild(ks);
+
+// Show custom-question badge on start if active
+(function(){
+  if(QS!==QS_ORIG&&QS.length>0){
+    const b=document.getElementById("editor-badge");
+    b.textContent=`✏️ ${QS.length} eigene Fragen geladen`;
+    b.classList.add("show");
+  }
+})();
+
+// ═══════════════════════════
+//  LEHRERMODUS
+// ═══════════════════════════
+let _kseq="";
+document.addEventListener("keydown",function(e){
+  if(!document.getElementById("editor-modal").classList.contains("hidden")) return;
+  _kseq+=e.key.toLowerCase();
+  if(_kseq.length>10) _kseq=_kseq.slice(-10);
+  if(_kseq.endsWith("lehrer")) showEditor();
+});
+
+function showEditor(){
+  document.getElementById("editor-ta").value=JSON.stringify(QS,null,2);
+  document.getElementById("editor-modal").classList.remove("hidden");
+}
+
+function hideEditor(){
+  document.getElementById("editor-modal").classList.add("hidden");
+}
+
+function saveEditor(){
+  try{
+    const val=JSON.parse(document.getElementById("editor-ta").value);
+    if(!Array.isArray(val)||val.length===0) throw new Error("Array ist leer");
+    val.forEach(function(q,i){
+      if(!q.q) throw new Error("Frage "+(i+1)+": 'q' fehlt");
+      if(!Array.isArray(q.opts)||q.opts.length<2) throw new Error("Frage "+(i+1)+": 'opts' braucht mind. 2 Einträge");
+      if(q.ok===undefined||q.ok<0||q.ok>=q.opts.length) throw new Error("Frage "+(i+1)+": 'ok' ist ungültig");
+    });
+    QS=val;
+    localStorage.setItem("lf3qs",JSON.stringify(val));
+    const b=document.getElementById("editor-badge");
+    b.textContent="✏️ "+val.length+" eigene Fragen geladen";
+    b.classList.add("show");
+    hideEditor();
+    alert("✅ "+val.length+" Fragen gespeichert!\nDas Quiz startet jetzt mit deinen Fragen.");
+  }catch(e){
+    alert("❌ Fehler: "+e.message+"\n\nBitte das JSON-Format prüfen.");
+  }
+}
+
+function exportQuestions(){
+  const blob=new Blob([JSON.stringify(QS,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="lf3-fragen.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importQuestions(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) throw new Error("Kein Array");
+      document.getElementById("editor-ta").value=JSON.stringify(data,null,2);
+      alert("✅ "+data.length+" Fragen importiert.\nKlicke 'Speichern & anwenden' um sie zu übernehmen.");
+    }catch(err){
+      alert("❌ Ungültige JSON-Datei: "+err.message);
+    }
+    e.target.value="";
+  };
+  reader.readAsText(file);
+}
+
+function resetQuestions(){
+  if(!confirm("Alle eigenen Fragen löschen und die Original-40-Fragen wiederherstellen?")) return;
+  QS=[...QS_ORIG];
+  localStorage.removeItem("lf3qs");
+  document.getElementById("editor-badge").classList.remove("show");
+  document.getElementById("editor-ta").value=JSON.stringify(QS,null,2);
+  alert("✅ Original-Fragen wiederhergestellt.");
+}
+</script>
+</body>
+</html>
